@@ -1,4 +1,5 @@
 import './App.css';
+import LoginForm from "./auth/LoginForm.tsx";
 
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
@@ -7,7 +8,8 @@ import '@fontsource/roboto/700.css';
 import { createTheme, ThemeProvider } from "@mui/material";
 import { Route, Routes } from "react-router-dom";
 import HomeScreen from "./core/HomeScreen.tsx";
-import BreedPage from "./core/BreedPage.tsx";
+import ProtectedRoute from "./security/ProtectedRoute.tsx"; // import nowego komponentu
+
 
 
 declare module '@mui/material/styles' {
@@ -55,15 +57,15 @@ function App() {
     },
     palette: {
       primary: {
-        main: '#556cd6', // Zmiana koloru głównego na bardziej neutralny
+        main: '#556cd6',
         light: '#888fd6',
         dark: '#334cb2',
       },
       secondary: {
-        main: '#f50057', // Zmiana koloru drugorzędnego na bardziej wyrazisty
+        main: '#f50057',
       },
       text: {
-        primary: '#2e3131', // Ciemniejszy kolor tekstu dla lepszej czytelności
+        primary: '#2e3131',
         secondary: '#535353',
         disabled: '#acacac',
       },
@@ -73,7 +75,12 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <Routes>
-        <Route path="homescreen" element={<HomeScreen/>}/>
+        <Route index element={<LoginForm />} />
+        {/* Ochrona trasy poprzez ProtectedRoute */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="homescreen" element={<HomeScreen />} />
+          {/* Tutaj można dodać kolejne chronione trasy */}
+        </Route>
       </Routes>
     </ThemeProvider>
   );

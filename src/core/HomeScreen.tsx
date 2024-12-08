@@ -6,7 +6,15 @@ function HomeScreen() {
     return (
         <div style={introBodyStyle}>
             <NavBar />
-            <main className="App" style={{ padding: '20px 20px 80px 20px', minHeight: '90vh', overflowX: 'hidden', overflowY: 'auto', width: 'calc(100% - 40px)' }}>
+            <main 
+                className="App" 
+                style={{ 
+                    padding: '20px', 
+                    minHeight: '90vh', 
+                    overflowY: 'auto', 
+                    width: '100%'
+                }}
+            >
                 {/* Content removed */}
             </main>
         </div>
