@@ -19,7 +19,6 @@ import HOST from "../config/apiConst.tsx";
 function HomeScreen() {
     const [breeds, setBreeds] = useState<Breed[]>([]);
     const [page, setPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10); // Liczba ras na stronę
     const [error, setError] = useState<string | null>(null);
 
@@ -44,8 +43,7 @@ function HomeScreen() {
                     throw new Error("Failed to fetch breeds.");
                 }
                 const data = await response.json();
-                setBreeds(data.content); // Dane ras
-                setTotalPages(data.totalPages); // Liczba stron
+                setBreeds(data); // Dane ras
             } catch (error) {
                 setError("Nie udało się pobrać danych. Spróbuj ponownie później.");
             }
@@ -205,7 +203,7 @@ function HomeScreen() {
                         >
                             <TablePagination
                                 component="div"
-                                count={totalPages * rowsPerPage}
+                                count={20}
                                 page={page}
                                 onPageChange={handleChangePage}
                                 rowsPerPage={rowsPerPage}
