@@ -33,7 +33,7 @@ function HomeScreen() {
     const theme = useTheme();
     const [allBreeds, setAllBreeds] = useState<Breed[]>([]);
     const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10); 
+    const [rowsPerPage, setRowsPerPage] = useState(10); // Liczba ras na stronę
     const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
     const [uniqueBreedNames, setUniqueBreedNames] = useState<string[]>([]);
     const [openList, setOpenList] = useState<boolean>(false);
@@ -284,7 +284,7 @@ function HomeScreen() {
                                     xs={12}
                                     sm={6}
                                     md={4}
-                                    lg={2.4}
+                                    lg={2.4} // 5 kart w rzędzie
                                     key={breed.id}
                                     style={{ display: "flex", justifyContent: "center" }}
                                 >
