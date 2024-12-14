@@ -34,19 +34,10 @@ function HomeScreen() {
     const [breeds, setBreeds] = useState<Breed[]>([]);
     const [error, setError] = useState<string | null>(null);
 
-    // Wybrane rasy (tablica nazw)
     const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
-
-    // Unikalne nazwy ras do wyświetlenia (tylko z aktualnie pobranej strony)
     const [uniqueBreedNames, setUniqueBreedNames] = useState<string[]>([]);
-
-    // Sterowanie pokazaniem listy z checkboxami
     const [openList, setOpenList] = useState<boolean>(false);
-
-    // Wyszukiwanie po nazwie
     const [searchTerm, setSearchTerm] = useState<string>("");
-
-    // Logika paginacji
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -98,13 +89,13 @@ function HomeScreen() {
         setPage(0);
     };
 
-    // Najpierw filtrujemy po wybranych rasach
+    // Filtrowanie po wybranych rasach z listy
     const filteredBySelection =
         selectedBreeds.length === 0
             ? breeds
             : breeds.filter((breed) => selectedBreeds.includes(breed.name));
 
-    // Dodatkowo filtrujemy po wpisanej frazie
+    // Filtrowanie po wpisanej frazie
     const finalFiltered = filteredBySelection.filter((breed) =>
         breed.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -173,7 +164,7 @@ function HomeScreen() {
                                 </Stack>
                             )}
 
-                            {/* Sekcja z wyszukiwaniem i przyciskiem do rozwijania listy */}
+                            {/* Sekcja Filtrowania */}
                             <Box
                                 sx={{
                                     display: "flex",
@@ -232,7 +223,6 @@ function HomeScreen() {
                                     >
                                         {openList ? "Zwiń listę" : "Wybierz rasy"}
                                     </Button>
-                                    {/* Lista ras w formie checkboxów (rozwijana) z scrollbar, wychodząca od buttona */}
                                     <Collapse
                                         in={openList}
                                         sx={{
