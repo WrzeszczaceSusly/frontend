@@ -18,6 +18,8 @@ import {
     TextField,
     InputAdornment,
     Paper,
+    useTheme,
+    TablePagination,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
@@ -28,13 +30,14 @@ import NavBar from "./NavBar.tsx";
 import HOST from "../config/apiConst.tsx";
 
 function HomeScreen() {
+    const theme = useTheme();
     const [breeds, setBreeds] = useState<Breed[]>([]);
     const [error, setError] = useState<string | null>(null);
 
     // Wybrane rasy (tablica nazw)
     const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
 
-    // Unikalne nazwy ras do wyświetlenia
+    // Unikalne nazwy ras do wyświetlenia (tylko z aktualnie pobranej strony)
     const [uniqueBreedNames, setUniqueBreedNames] = useState<string[]>([]);
 
     // Sterowanie pokazaniem listy z checkboxami
@@ -43,12 +46,15 @@ function HomeScreen() {
     // Wyszukiwanie po nazwie
     const [searchTerm, setSearchTerm] = useState<string>("");
 
+    // Logika paginacji
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
     useEffect(() => {
         const token = localStorage.getItem("token");
 
         const fetchBreeds = async () => {
             try {
-                // Pobieramy wszystkie dostępne rasy, np. 20 sztuk
                 const response = await fetch(`${HOST}/breeds?page=0&size=20`, {
                     method: "GET",
                     headers: {
@@ -73,7 +79,7 @@ function HomeScreen() {
         };
 
         fetchBreeds();
-    }, []);
+    }, [page, rowsPerPage]);
 
     const handleCheckboxChange = (name: string) => {
         if (selectedBreeds.includes(name)) {
@@ -81,6 +87,15 @@ function HomeScreen() {
         } else {
             setSelectedBreeds([...selectedBreeds, name]);
         }
+    };
+
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
     };
 
     // Najpierw filtrujemy po wybranych rasach
@@ -100,7 +115,7 @@ function HomeScreen() {
             <main
                 className="App"
                 style={{
-                    padding: "20px",
+                    padding: theme.spacing(4),
                     minHeight: "90vh",
                     overflowY: "auto",
                     width: "100%",
@@ -108,11 +123,11 @@ function HomeScreen() {
             >
                 {error ? (
                     <Typography
-                        variant="h6"
+                        variant="body1"
                         color="error"
                         sx={{
                             textAlign: "center",
-                            marginTop: "20px",
+                            marginTop: theme.spacing(2),
                         }}
                     >
                         {error}
@@ -121,56 +136,55 @@ function HomeScreen() {
                     <Container maxWidth="xl">
                         <Paper
                             sx={{
-                                padding: "20px",
-                                marginBottom: "30px",
-                                borderRadius: "12px",
-                                boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-                                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                                padding: theme.spacing(3),
+                                marginBottom: theme.spacing(4),
+                                borderRadius: 2,
+                                boxShadow: "none",
+                                border: `1px solid ${theme.palette.divider}`,
+                                backgroundColor: theme.palette.background.paper,
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: theme.spacing(2),
+                                alignItems: "center",
                             }}
                         >
                             {/* Wybrane rasy jako chipy */}
                             {selectedBreeds.length > 0 && (
-                                <Box
-                                    sx={{
-                                        display: "flex",
-                                        justifyContent: "center",
-                                        marginBottom: "20px",
-                                    }}
+                                <Stack
+                                    direction="row"
+                                    spacing={1}
+                                    flexWrap="wrap"
+                                    justifyContent="center"
                                 >
-                                    <Stack
-                                        direction="row"
-                                        spacing={1}
-                                        flexWrap="wrap"
-                                        justifyContent="center"
-                                    >
-                                        {selectedBreeds.map((name) => (
-                                            <Chip
-                                                key={name}
-                                                label={name}
-                                                onDelete={() =>
-                                                    setSelectedBreeds(selectedBreeds.filter((b) => b !== name))
-                                                }
-                                                variant="outlined"
-                                                color="primary"
-                                                sx={{
-                                                    fontSize: "0.9rem",
-                                                    cursor: "pointer",
-                                                }}
-                                            />
-                                        ))}
-                                    </Stack>
-                                </Box>
+                                    {selectedBreeds.map((name) => (
+                                        <Chip
+                                            key={name}
+                                            label={name}
+                                            onDelete={() =>
+                                                setSelectedBreeds(selectedBreeds.filter((b) => b !== name))
+                                            }
+                                            variant="outlined"
+                                            color="primary"
+                                            sx={{
+                                                fontSize: "0.85rem",
+                                            }}
+                                        />
+                                    ))}
+                                </Stack>
                             )}
 
                             {/* Sekcja z wyszukiwaniem i przyciskiem do rozwijania listy */}
                             <Box
                                 sx={{
                                     display: "flex",
-                                    justifyContent: "center",
                                     alignItems: "center",
-                                    flexWrap: "wrap",
-                                    gap: "10px",
-                                    marginBottom: "20px",
+                                    gap: theme.spacing(2),
+                                    width: "100%",
+                                    maxWidth: "600px",
+                                    backgroundColor: theme.palette.background.default,
+                                    borderRadius: 2,
+                                    position: "relative",
+                                    padding: theme.spacing(2),
                                 }}
                             >
                                 <TextField
@@ -178,72 +192,97 @@ function HomeScreen() {
                                     variant="outlined"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    sx={{ width: "300px" }}
+                                    fullWidth
+                                    size="small"
                                     InputProps={{
                                         endAdornment: (
                                             <InputAdornment position="end">
                                                 <SearchIcon color="primary" />
                                             </InputAdornment>
                                         ),
+                                        sx: { 
+                                            '& .MuiInputBase-input': {
+                                                height: 'auto',
+                                                paddingTop: theme.spacing(1.1),
+                                                paddingBottom: theme.spacing(1.1),
+                                            }
+                                        },
+                                    }}
+                                    sx={{
+                                        backgroundColor: "white",
+                                        '& .MuiOutlinedInput-root': {
+                                            height: '40px',
+                                        },
                                     }}
                                 />
-                                <Button
-                                    variant="text"
-                                    onClick={() => setOpenList(!openList)}
-                                    endIcon={openList ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                                    sx={{ textTransform: "none", fontWeight: "bold" }}
-                                >
-                                    {openList ? "Zwiń listę ras" : "Wybierz rasy"}
-                                </Button>
-                            </Box>
 
-                            {/* Lista ras w formie checkboxów (rozwijana) z scrollbar */}
-                            <Collapse in={openList}>
-                                <Box
-                                    sx={{
-                                        display: "flex",
-                                        justifyContent: "center",
-                                        marginBottom: "20px",
-                                    }}
-                                >
-                                    <Box
+                                <Box sx={{ position: "relative" }}>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={() => setOpenList(!openList)}
+                                        endIcon={openList ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                                         sx={{
-                                            maxHeight: "200px", // Wysokość na ok. 5 ras
-                                            overflowY: "auto",
-                                            padding: "0 10px",
-                                            border: "1px solid #ccc",
-                                            borderRadius: "8px",
-                                            width: "300px",
+                                            textTransform: "none",
+                                            fontWeight: "bold",
+                                            fontSize: "0.9rem",
+                                            backgroundColor: "white",
+                                            height: '40px',
+                                            whiteSpace: "nowrap",
                                         }}
                                     >
-                                        <FormGroup>
-                                            {uniqueBreedNames.map((name) => (
-                                                <FormControlLabel
-                                                    key={name}
-                                                    control={
-                                                        <Checkbox
-                                                            checked={selectedBreeds.includes(name)}
-                                                            onChange={() => handleCheckboxChange(name)}
-                                                            color="primary"
-                                                        />
-                                                    }
-                                                    label={name}
-                                                    sx={{
-                                                        "& .MuiTypography-root": {
-                                                            fontSize: "0.9rem",
-                                                        },
-                                                    }}
-                                                />
-                                            ))}
-                                        </FormGroup>
-                                    </Box>
+                                        {openList ? "Zwiń listę" : "Wybierz rasy"}
+                                    </Button>
+                                    {/* Lista ras w formie checkboxów (rozwijana) z scrollbar, wychodząca od buttona */}
+                                    <Collapse
+                                        in={openList}
+                                        sx={{
+                                            position: "absolute",
+                                            top: "100%",
+                                            left: 0,
+                                            width: "300px",
+                                            mt: 1,
+                                        }}
+                                    >
+                                        <Box
+                                            sx={{
+                                                maxHeight: "200px",
+                                                overflowY: "auto",
+                                                paddingX: theme.spacing(2),
+                                                paddingY: theme.spacing(1),
+                                                border: `1px solid ${theme.palette.divider}`,
+                                                borderRadius: 2,
+                                                backgroundColor: "white",
+                                            }}
+                                        >
+                                            <FormGroup>
+                                                {uniqueBreedNames.map((name) => (
+                                                    <FormControlLabel
+                                                        key={name}
+                                                        control={
+                                                            <Checkbox
+                                                                checked={selectedBreeds.includes(name)}
+                                                                onChange={() => handleCheckboxChange(name)}
+                                                                color="primary"
+                                                            />
+                                                        }
+                                                        label={name}
+                                                        sx={{
+                                                            "& .MuiTypography-root": {
+                                                                fontSize: "0.9rem",
+                                                            },
+                                                        }}
+                                                    />
+                                                ))}
+                                            </FormGroup>
+                                        </Box>
+                                    </Collapse>
                                 </Box>
-                            </Collapse>
+                            </Box>
                         </Paper>
 
                         <Grid
                             container
-                            spacing={4}
+                            spacing={3}
                             justifyContent="center"
                             sx={{ maxWidth: "1400px", margin: "0 auto" }}
                         >
@@ -261,8 +300,8 @@ function HomeScreen() {
                                         sx={{
                                             width: "220px",
                                             height: "320px",
-                                            borderRadius: 4,
-                                            boxShadow: 2,
+                                            borderRadius: 2,
+                                            boxShadow: `0px 1px 4px rgba(0,0,0,0.1)`,
                                             display: "flex",
                                             flexDirection: "column",
                                             justifyContent: "space-between",
@@ -271,7 +310,7 @@ function HomeScreen() {
                                         <Box
                                             sx={{
                                                 height: "150px",
-                                                backgroundColor: "#f5f5f5",
+                                                backgroundColor: theme.palette.grey[100],
                                                 display: "flex",
                                                 justifyContent: "center",
                                                 alignItems: "center",
@@ -281,21 +320,22 @@ function HomeScreen() {
                                                 variant="h1"
                                                 component="div"
                                                 sx={{
-                                                    fontSize: "50px",
+                                                    fontSize: "40px",
                                                     fontWeight: "bold",
                                                 }}
                                             >
                                                 🐶
                                             </Typography>
                                         </Box>
-                                        <CardContent>
+                                        <CardContent sx={{ padding: theme.spacing(2) }}>
                                             <Typography
                                                 gutterBottom
-                                                variant="h6"
+                                                variant="subtitle1"
                                                 component="div"
                                                 sx={{
                                                     fontWeight: "bold",
                                                     textAlign: "center",
+                                                    fontSize: "1rem",
                                                 }}
                                             >
                                                 {breed.name}
@@ -303,7 +343,7 @@ function HomeScreen() {
                                             <Typography
                                                 variant="body2"
                                                 color="text.secondary"
-                                                sx={{ textAlign: "center" }}
+                                                sx={{ textAlign: "center", fontSize: "0.85rem" }}
                                             >
                                                 Popularna rasa psów.
                                             </Typography>
@@ -311,7 +351,7 @@ function HomeScreen() {
                                         <CardActions
                                             sx={{
                                                 justifyContent: "center",
-                                                paddingBottom: "10px",
+                                                paddingBottom: theme.spacing(2),
                                             }}
                                         >
                                             <Button
@@ -320,6 +360,7 @@ function HomeScreen() {
                                                 sx={{
                                                     textTransform: "none",
                                                     borderRadius: "20px",
+                                                    fontSize: "0.85rem",
                                                 }}
                                             >
                                                 <Link
@@ -337,6 +378,37 @@ function HomeScreen() {
                                 </Grid>
                             ))}
                         </Grid>
+
+                        {/* Paginacja */}
+                        <Box
+                            sx={{
+                                display: "flex",
+                                justifyContent: "center",
+                                marginTop: theme.spacing(4),
+                                padding: theme.spacing(2),
+                                borderRadius: 2,
+                                backgroundColor: "white",
+                                boxShadow: "0px 1px 4px rgba(0,0,0,0.1)",
+                                maxWidth: "500px",
+                                margin: "40px auto 0",
+                            }}
+                        >
+                            <TablePagination
+                                component="div"
+                                count={20}
+                                page={page}
+                                onPageChange={handleChangePage}
+                                rowsPerPage={rowsPerPage}
+                                onRowsPerPageChange={handleChangeRowsPerPage}
+                                rowsPerPageOptions={[5, 10, 20]}
+                                sx={{
+                                    ".MuiTablePagination-toolbar": {
+                                        justifyContent: "center",
+                                        padding: 0,
+                                    },
+                                }}
+                            />
+                        </Box>
                     </Container>
                 )}
             </main>
@@ -345,4 +417,3 @@ function HomeScreen() {
 }
 
 export default HomeScreen;
-
