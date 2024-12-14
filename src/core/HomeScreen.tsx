@@ -31,20 +31,19 @@ import HOST from "../config/apiConst.tsx";
 
 function HomeScreen() {
     const theme = useTheme();
-    const [breeds, setBreeds] = useState<Breed[]>([]);
-    const [error, setError] = useState<string | null>(null);
-
+    const [allBreeds, setAllBreeds] = useState<Breed[]>([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10); 
     const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
     const [uniqueBreedNames, setUniqueBreedNames] = useState<string[]>([]);
     const [openList, setOpenList] = useState<boolean>(false);
     const [searchTerm, setSearchTerm] = useState<string>("");
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
 
-        const fetchBreeds = async () => {
+        const fetchBreedsForFiltering = async () => {
             try {
                 const response = await fetch(`${HOST}/breeds?page=0&size=20`, {
                     method: "GET",
@@ -59,8 +58,7 @@ function HomeScreen() {
                     throw new Error("Failed to fetch breeds.");
                 }
                 const data = await response.json();
-                setBreeds(data);
-
+                setAllBreeds(data); 
                 const names = data.map((b: Breed) => b.name);
                 const uniqueNames = Array.from(new Set(names));
                 setUniqueBreedNames(uniqueNames);
@@ -69,8 +67,8 @@ function HomeScreen() {
             }
         };
 
-        fetchBreeds();
-    }, [page, rowsPerPage]);
+        fetchBreedsForFiltering();
+    }, []);
 
     const handleCheckboxChange = (name: string) => {
         if (selectedBreeds.includes(name)) {
@@ -92,13 +90,18 @@ function HomeScreen() {
     // Filtrowanie po wybranych rasach z listy
     const filteredBySelection =
         selectedBreeds.length === 0
-            ? breeds
-            : breeds.filter((breed) => selectedBreeds.includes(breed.name));
+            ? allBreeds
+            : allBreeds.filter((breed) => selectedBreeds.includes(breed.name));
 
     // Filtrowanie po wpisanej frazie
     const finalFiltered = filteredBySelection.filter((breed) =>
         breed.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Przycięcie wyników do aktualnej strony
+    const startIndex = page * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const paginatedBreeds = finalFiltered.slice(startIndex, endIndex);
 
     return (
         <div style={introBodyStyle}>
@@ -106,7 +109,7 @@ function HomeScreen() {
             <main
                 className="App"
                 style={{
-                    padding: theme.spacing(4),
+                    padding: "20px",
                     minHeight: "90vh",
                     overflowY: "auto",
                     width: "100%",
@@ -114,11 +117,11 @@ function HomeScreen() {
             >
                 {error ? (
                     <Typography
-                        variant="body1"
+                        variant="h6"
                         color="error"
                         sx={{
                             textAlign: "center",
-                            marginTop: theme.spacing(2),
+                            marginTop: "20px",
                         }}
                     >
                         {error}
@@ -191,7 +194,7 @@ function HomeScreen() {
                                                 <SearchIcon color="primary" />
                                             </InputAdornment>
                                         ),
-                                        sx: { 
+                                        sx: {
                                             '& .MuiInputBase-input': {
                                                 height: 'auto',
                                                 paddingTop: theme.spacing(1.1),
@@ -269,14 +272,13 @@ function HomeScreen() {
                                 </Box>
                             </Box>
                         </Paper>
-
                         <Grid
                             container
-                            spacing={3}
+                            spacing={4}
                             justifyContent="center"
                             sx={{ maxWidth: "1400px", margin: "0 auto" }}
                         >
-                            {finalFiltered.map((breed) => (
+                            {paginatedBreeds.map((breed) => (
                                 <Grid
                                     item
                                     xs={12}
@@ -290,8 +292,13 @@ function HomeScreen() {
                                         sx={{
                                             width: "220px",
                                             height: "320px",
-                                            borderRadius: 2,
-                                            boxShadow: `0px 1px 4px rgba(0,0,0,0.1)`,
+                                            borderRadius: 4,
+                                            boxShadow: 5,
+                                            transition: "transform 0.3s ease",
+                                            "&:hover": {
+                                                transform: "scale(1.05)",
+                                                boxShadow: 10,
+                                            },
                                             display: "flex",
                                             flexDirection: "column",
                                             justifyContent: "space-between",
@@ -300,7 +307,7 @@ function HomeScreen() {
                                         <Box
                                             sx={{
                                                 height: "150px",
-                                                backgroundColor: theme.palette.grey[100],
+                                                backgroundColor: "#f5f5f5",
                                                 display: "flex",
                                                 justifyContent: "center",
                                                 alignItems: "center",
@@ -310,22 +317,22 @@ function HomeScreen() {
                                                 variant="h1"
                                                 component="div"
                                                 sx={{
-                                                    fontSize: "40px",
+                                                    fontSize: "50px",
+                                                    color: "#556cd6",
                                                     fontWeight: "bold",
                                                 }}
                                             >
                                                 🐶
                                             </Typography>
                                         </Box>
-                                        <CardContent sx={{ padding: theme.spacing(2) }}>
+                                        <CardContent>
                                             <Typography
                                                 gutterBottom
-                                                variant="subtitle1"
+                                                variant="h6"
                                                 component="div"
                                                 sx={{
                                                     fontWeight: "bold",
                                                     textAlign: "center",
-                                                    fontSize: "1rem",
                                                 }}
                                             >
                                                 {breed.name}
@@ -333,7 +340,7 @@ function HomeScreen() {
                                             <Typography
                                                 variant="body2"
                                                 color="text.secondary"
-                                                sx={{ textAlign: "center", fontSize: "0.85rem" }}
+                                                sx={{ textAlign: "center" }}
                                             >
                                                 Popularna rasa psów.
                                             </Typography>
@@ -341,16 +348,16 @@ function HomeScreen() {
                                         <CardActions
                                             sx={{
                                                 justifyContent: "center",
-                                                paddingBottom: theme.spacing(2),
+                                                paddingBottom: "10px",
                                             }}
                                         >
                                             <Button
                                                 size="small"
                                                 variant="contained"
+                                                color="primary"
                                                 sx={{
                                                     textTransform: "none",
                                                     borderRadius: "20px",
-                                                    fontSize: "0.85rem",
                                                 }}
                                             >
                                                 <Link
@@ -368,24 +375,21 @@ function HomeScreen() {
                                 </Grid>
                             ))}
                         </Grid>
-
                         {/* Paginacja */}
                         <Box
                             sx={{
                                 display: "flex",
                                 justifyContent: "center",
-                                marginTop: theme.spacing(4),
-                                padding: theme.spacing(2),
-                                borderRadius: 2,
-                                backgroundColor: "white",
-                                boxShadow: "0px 1px 4px rgba(0,0,0,0.1)",
-                                maxWidth: "500px",
-                                margin: "40px auto 0",
+                                marginTop: "20px",
+                                padding: "20px 0",
+                                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                                borderRadius: "12px",
+                                boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
                             }}
                         >
                             <TablePagination
                                 component="div"
-                                count={20}
+                                count={finalFiltered.length}
                                 page={page}
                                 onPageChange={handleChangePage}
                                 rowsPerPage={rowsPerPage}
@@ -394,7 +398,6 @@ function HomeScreen() {
                                 sx={{
                                     ".MuiTablePagination-toolbar": {
                                         justifyContent: "center",
-                                        padding: 0,
                                     },
                                 }}
                             />
