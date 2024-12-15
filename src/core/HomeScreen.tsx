@@ -45,7 +45,7 @@ function HomeScreen() {
 
         const fetchBreedsForFiltering = async () => {
             try {
-                const response = await fetch(`${HOST}/breeds?page=0&size=20`, {
+                const response = await fetch(`${HOST}/dogs?page=0&size=20`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -342,7 +342,7 @@ function HomeScreen() {
                                                 color="text.secondary"
                                                 sx={{ textAlign: "center" }}
                                             >
-                                                Popularna rasa psów.
+                                                {breed.breedName}
                                             </Typography>
                                         </CardContent>
                                         <CardActions
