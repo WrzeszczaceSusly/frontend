@@ -25,6 +25,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import SearchIcon from "@mui/icons-material/Search";
 import { Breed } from "../data/Breed";
+import { Dog } from "../data/Dog.tsx";
 import { Link } from "react-router-dom";
 import NavBar from "./NavBar.tsx";
 import HOST from "../config/apiConst.tsx";
@@ -32,20 +33,53 @@ import HOST from "../config/apiConst.tsx";
 function HomeScreen() {
     const theme = useTheme();
     const [allBreeds, setAllBreeds] = useState<Breed[]>([]);
+    const [allDogs, setAllDogs] = useState<Dog[]>([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10); // Liczba ras na stronę
     const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
     const [uniqueBreedNames, setUniqueBreedNames] = useState<string[]>([]);
+    const [uniqueDogNames, setUniqueDogNames] = useState<string[]>([]);
     const [openList, setOpenList] = useState<boolean>(false);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
 
+    // useEffect(() => {
+    //     const token = localStorage.getItem("token");
+
+    //     const fetchBreedsForFiltering = async () => {
+    //         try {
+    //             const response = await fetch(`${HOST}/breeds?page=0&size=20`, {
+    //                 method: "GET",
+    //                 headers: {
+    //                     "Content-Type": "application/json",
+    //                     Authorization: `Bearer ${token}`,
+    //                 },
+    //                 credentials: "include",
+    //             });
+
+    //             if (!response.ok) {
+    //                 throw new Error("Failed to fetch breeds.");
+    //             }
+    //             const data = await response.json();
+    //             setAllBreeds(data); 
+    //             const names = data.map((b: Breed) => b.name);
+    //             const uniqueNames = Array.from(new Set(names));
+    //             setUniqueBreedNames(uniqueNames);
+    //         } catch (error) {
+    //             setError("Nie udało się pobrać danych. Spróbuj ponownie później.");
+    //             console.log(error)
+    //         }
+    //     };
+
+    //     fetchBreedsForFiltering();
+    // }, []);
+
     useEffect(() => {
         const token = localStorage.getItem("token");
 
-        const fetchBreedsForFiltering = async () => {
+        const fetchDogs = async () => {
             try {
-                const response = await fetch(`${HOST}/breeds?page=0&size=20`, {
+                const response = await fetch(`${HOST}/dogs?page=0&size=20`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -55,19 +89,19 @@ function HomeScreen() {
                 });
 
                 if (!response.ok) {
-                    throw new Error("Failed to fetch breeds.");
+                    throw new Error("Failed to fetch dogs.");
                 }
                 const data = await response.json();
-                setAllBreeds(data); 
-                const names = data.map((b: Breed) => b.name);
+                setAllDogs(data); 
+                const names = data.map((d: Dog) => d.name);
                 const uniqueNames = Array.from(new Set(names));
-                setUniqueBreedNames(uniqueNames);
+                setUniqueDogNames(uniqueNames);
             } catch (error) {
                 setError("Nie udało się pobrać danych. Spróbuj ponownie później.");
             }
         };
 
-        fetchBreedsForFiltering();
+        fetchDogs();
     }, []);
 
     const handleCheckboxChange = (name: string) => {
@@ -90,12 +124,12 @@ function HomeScreen() {
     // Filtrowanie po wybranych rasach z listy
     const filteredBySelection =
         selectedBreeds.length === 0
-            ? allBreeds
-            : allBreeds.filter((breed) => selectedBreeds.includes(breed.name));
+            ? allDogs
+            : allDogs.filter((breed) => selectedBreeds.includes(breed.name));
 
     // Filtrowanie po wpisanej frazie
-    const finalFiltered = filteredBySelection.filter((breed) =>
-        breed.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const finalFiltered = filteredBySelection.filter((dog) =>
+        dog.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // Przycięcie wyników do aktualnej strony
