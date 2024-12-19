@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+// src/components/HomeScreen.tsx
+import React, { useState, useEffect, useMemo } from "react";
 import { introBodyStyle } from "../config/style.tsx";
 import {
     Card,
@@ -25,6 +26,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import SearchIcon from "@mui/icons-material/Search";
 import { Breed } from "../data/Breed";
+import { Dog } from "../data/Dog";
 import { Link } from "react-router-dom";
 import NavBar from "./NavBar.tsx";
 import HOST from "../config/apiConst.tsx";
@@ -32,20 +34,21 @@ import HOST from "../config/apiConst.tsx";
 function HomeScreen() {
     const theme = useTheme();
     const [allBreeds, setAllBreeds] = useState<Breed[]>([]);
+    const [allDogs, setAllDogs] = useState<Dog[]>([]);
     const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10); // Liczba ras na stronę
+    const [rowsPerPage, setRowsPerPage] = useState(10); // Liczba psów na stronę
     const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
     const [uniqueBreedNames, setUniqueBreedNames] = useState<string[]>([]);
-    const [openList, setOpenList] = useState<boolean>(false);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
+    const [openList, setOpenList] = useState<boolean>(false);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
 
         const fetchBreedsForFiltering = async () => {
             try {
-                const response = await fetch(`${HOST}/breeds?page=0&size=20`, {
+                const response = await fetch(`${HOST}/breeds?page=0&size=100`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -57,17 +60,46 @@ function HomeScreen() {
                 if (!response.ok) {
                     throw new Error("Failed to fetch breeds.");
                 }
-                const data = await response.json();
-                setAllBreeds(data); 
+                const data: Breed[] = await response.json();
+                setAllBreeds(data);
                 const names = data.map((b: Breed) => b.name);
                 const uniqueNames = Array.from(new Set(names));
                 setUniqueBreedNames(uniqueNames);
             } catch (error) {
                 setError("Nie udało się pobrać danych. Spróbuj ponownie później.");
+                console.error(error);
             }
         };
 
         fetchBreedsForFiltering();
+    }, []);
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+
+        const fetchDogs = async () => {
+            try {
+                const response = await fetch(`${HOST}/dogs?page=0&size=100`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    credentials: "include",
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch dogs.");
+                }
+                const data: Dog[] = await response.json();
+                setAllDogs(data);
+            } catch (error) {
+                setError("Nie udało się pobrać danych. Spróbuj ponownie później.");
+                console.error(error);
+            }
+        };
+
+        fetchDogs();
     }, []);
 
     const handleCheckboxChange = (name: string) => {
@@ -87,29 +119,200 @@ function HomeScreen() {
         setPage(0);
     };
 
-    // Filtrowanie po wybranych rasach z listy
-    const filteredBySelection =
-        selectedBreeds.length === 0
-            ? allBreeds
-            : allBreeds.filter((breed) => selectedBreeds.includes(breed.name));
+    // Użycie useMemo do optymalizacji filtrowania
+    const finalFiltered = useMemo(() => {
+        const filteredBySelection =
+            selectedBreeds.length === 0
+                ? allDogs
+                : allDogs.filter((dog) => selectedBreeds.includes(dog.breedName));
 
-    // Filtrowanie po wpisanej frazie
-    const finalFiltered = filteredBySelection.filter((breed) =>
-        breed.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+        return filteredBySelection.filter((dog) =>
+            dog.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [allDogs, selectedBreeds, searchTerm]);
 
     // Przycięcie wyników do aktualnej strony
-    const startIndex = page * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    const paginatedBreeds = finalFiltered.slice(startIndex, endIndex);
+    const paginatedDogs = useMemo(() => {
+        const startIndex = page * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        return finalFiltered.slice(startIndex, endIndex);
+    }, [finalFiltered, page, rowsPerPage]);
 
     return (
         <div style={introBodyStyle}>
             <NavBar />
+
+            {/* Stała Sekcja Filtrowania */}
+            <Box
+                sx={{
+                    position: "fixed",
+                    top: theme.spacing(8), // Dostosuj do wysokości NavBar
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: { xs: "90%", sm: "80%", md: "60%", lg: "50%" }, // Responsywna szerokość
+                    backgroundColor: "transparent",
+                    zIndex: 1000,
+                    padding: theme.spacing(1),
+                }}
+            >
+                <Paper
+                    sx={{
+                        padding: theme.spacing(2),
+                        borderRadius: 2,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: theme.spacing(2),
+                        width: "100%",
+                        boxShadow: 3,
+                        backgroundColor: theme.palette.background.paper,
+                    }}
+                >
+                    <TextField
+                        label="Szukaj po nazwie psa"
+                        variant="outlined"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        fullWidth
+                        size="small"
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <SearchIcon color="primary" />
+                                </InputAdornment>
+                            ),
+                            sx: {
+                                '& .MuiInputBase-input': {
+                                    height: 'auto',
+                                    paddingTop: theme.spacing(1.1),
+                                    paddingBottom: theme.spacing(1.1),
+                                }
+                            },
+                        }}
+                        sx={{
+                            backgroundColor: "white",
+                            '& .MuiOutlinedInput-root': {
+                                height: '40px',
+                            },
+                        }}
+                    />
+
+                    <Box sx={{ position: "relative" }}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => setOpenList(!openList)}
+                            endIcon={openList ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                            sx={{
+                                textTransform: "none",
+                                fontWeight: "bold",
+                                fontSize: "0.9rem",
+                                backgroundColor: "white",
+                                height: '40px',
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            {openList ? "Zwiń listę" : "Wybierz rasy"}
+                        </Button>
+                        <Collapse
+                            in={openList}
+                            sx={{
+                                position: "absolute",
+                                top: "100%",
+                                left: 0,
+                                width: "300px",
+                                mt: 1,
+                                zIndex: 1, // zapewnia, że jest na wierzchu
+                            }}
+                        >
+                            <Box
+                                sx={{
+                                    maxHeight: "200px",
+                                    overflowY: "auto",
+                                    paddingX: theme.spacing(2),
+                                    paddingY: theme.spacing(1),
+                                    border: `1px solid ${theme.palette.divider}`,
+                                    borderRadius: 2,
+                                    backgroundColor: "white",
+                                }}
+                            >
+                                <FormGroup>
+                                    {uniqueBreedNames.map((name) => (
+                                        <FormControlLabel
+                                            key={name}
+                                            control={
+                                                <Checkbox
+                                                    checked={selectedBreeds.includes(name)}
+                                                    onChange={() => handleCheckboxChange(name)}
+                                                    color="primary"
+                                                />
+                                            }
+                                            label={name}
+                                            sx={{
+                                                "& .MuiTypography-root": {
+                                                    fontSize: "0.9rem",
+                                                },
+                                            }}
+                                        />
+                                    ))}
+                                </FormGroup>
+                            </Box>
+                        </Collapse>
+                    </Box>
+                </Paper>
+            </Box>
+
+            {/* Sekcja Wybranych Ras */}
+            {selectedBreeds.length > 0 && (
+                <Box
+                    sx={{
+                        position: "fixed",
+                        top: `calc(${theme.spacing(8)} + 72px + ${theme.spacing(1)})`, // Dostosuj do wysokości NavBar + filter box + odstęp
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: { xs: "90%", sm: "80%", md: "60%", lg: "50%" }, // Responsywna szerokość
+                        backgroundColor: "transparent",
+                        zIndex: 999, // niższy niż filter box
+                        padding: theme.spacing(1),
+                    }}
+                >
+                    <Paper
+                        sx={{
+                            padding: theme.spacing(1),
+                            borderRadius: 2,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: theme.spacing(1),
+                            width: "100%",
+                            boxShadow: 1,
+                            backgroundColor: theme.palette.background.paper,
+                            overflowX: "auto",
+                            whiteSpace: "nowrap", // Zapobiega łamaniu się chipów
+                        }}
+                    >
+                        <Stack direction="row" spacing={1} flexWrap="nowrap">
+                            {selectedBreeds.map((name) => (
+                                <Chip
+                                    key={name}
+                                    label={name}
+                                    onDelete={() =>
+                                        setSelectedBreeds(selectedBreeds.filter((b) => b !== name))
+                                    }
+                                    variant="outlined"
+                                    color="primary"
+                                    sx={{
+                                        fontSize: "0.85rem",
+                                    }}
+                                />
+                            ))}
+                        </Stack>
+                    </Paper>
+                </Box>
+            )}
+
             <main
                 className="App"
                 style={{
                     padding: "20px",
+                    paddingTop: selectedBreeds.length > 0 ? `calc(${theme.spacing(8)} + 72px + ${theme.spacing(2)})` : theme.spacing(12), // Dostosuj w zależności od wysokości sekcji filtrowania i wybranych ras
                     minHeight: "90vh",
                     overflowY: "auto",
                     width: "100%",
@@ -123,169 +326,26 @@ function HomeScreen() {
                             textAlign: "center",
                             marginTop: "20px",
                         }}
+                        component="div" // Aby uniknąć zagnieżdżania <h6> wewnątrz <h2>
                     >
                         {error}
                     </Typography>
                 ) : (
                     <Container maxWidth="xl">
-                        <Paper
-                            sx={{
-                                padding: theme.spacing(3),
-                                marginBottom: theme.spacing(4),
-                                borderRadius: 2,
-                                boxShadow: "none",
-                                border: `1px solid ${theme.palette.divider}`,
-                                backgroundColor: theme.palette.background.paper,
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: theme.spacing(2),
-                                alignItems: "center",
-                            }}
-                        >
-                            {/* Wybrane rasy jako chipy */}
-                            {selectedBreeds.length > 0 && (
-                                <Stack
-                                    direction="row"
-                                    spacing={1}
-                                    flexWrap="wrap"
-                                    justifyContent="center"
-                                >
-                                    {selectedBreeds.map((name) => (
-                                        <Chip
-                                            key={name}
-                                            label={name}
-                                            onDelete={() =>
-                                                setSelectedBreeds(selectedBreeds.filter((b) => b !== name))
-                                            }
-                                            variant="outlined"
-                                            color="primary"
-                                            sx={{
-                                                fontSize: "0.85rem",
-                                            }}
-                                        />
-                                    ))}
-                                </Stack>
-                            )}
-
-                            {/* Sekcja Filtrowania */}
-                            <Box
-                                sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: theme.spacing(2),
-                                    width: "100%",
-                                    maxWidth: "600px",
-                                    backgroundColor: theme.palette.background.default,
-                                    borderRadius: 2,
-                                    position: "relative",
-                                    padding: theme.spacing(2),
-                                }}
-                            >
-                                <TextField
-                                    label="Wyszukaj rasę"
-                                    variant="outlined"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <SearchIcon color="primary" />
-                                            </InputAdornment>
-                                        ),
-                                        sx: {
-                                            '& .MuiInputBase-input': {
-                                                height: 'auto',
-                                                paddingTop: theme.spacing(1.1),
-                                                paddingBottom: theme.spacing(1.1),
-                                            }
-                                        },
-                                    }}
-                                    sx={{
-                                        backgroundColor: "white",
-                                        '& .MuiOutlinedInput-root': {
-                                            height: '40px',
-                                        },
-                                    }}
-                                />
-
-                                <Box sx={{ position: "relative" }}>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => setOpenList(!openList)}
-                                        endIcon={openList ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                                        sx={{
-                                            textTransform: "none",
-                                            fontWeight: "bold",
-                                            fontSize: "0.9rem",
-                                            backgroundColor: "white",
-                                            height: '40px',
-                                            whiteSpace: "nowrap",
-                                        }}
-                                    >
-                                        {openList ? "Zwiń listę" : "Wybierz rasy"}
-                                    </Button>
-                                    <Collapse
-                                        in={openList}
-                                        sx={{
-                                            position: "absolute",
-                                            top: "100%",
-                                            left: 0,
-                                            width: "300px",
-                                            mt: 1,
-                                        }}
-                                    >
-                                        <Box
-                                            sx={{
-                                                maxHeight: "200px",
-                                                overflowY: "auto",
-                                                paddingX: theme.spacing(2),
-                                                paddingY: theme.spacing(1),
-                                                border: `1px solid ${theme.palette.divider}`,
-                                                borderRadius: 2,
-                                                backgroundColor: "white",
-                                            }}
-                                        >
-                                            <FormGroup>
-                                                {uniqueBreedNames.map((name) => (
-                                                    <FormControlLabel
-                                                        key={name}
-                                                        control={
-                                                            <Checkbox
-                                                                checked={selectedBreeds.includes(name)}
-                                                                onChange={() => handleCheckboxChange(name)}
-                                                                color="primary"
-                                                            />
-                                                        }
-                                                        label={name}
-                                                        sx={{
-                                                            "& .MuiTypography-root": {
-                                                                fontSize: "0.9rem",
-                                                            },
-                                                        }}
-                                                    />
-                                                ))}
-                                            </FormGroup>
-                                        </Box>
-                                    </Collapse>
-                                </Box>
-                            </Box>
-                        </Paper>
                         <Grid
                             container
                             spacing={4}
                             justifyContent="center"
                             sx={{ maxWidth: "1400px", margin: "0 auto" }}
                         >
-                            {paginatedBreeds.map((breed) => (
+                            {paginatedDogs.map((dog) => (
                                 <Grid
                                     item
                                     xs={12}
                                     sm={6}
                                     md={4}
-                                    lg={2.4} // 5 kart w rzędzie
-                                    key={breed.id}
+                                    lg={3} // 4 karty na rząd
+                                    key={dog.id}
                                     style={{ display: "flex", justifyContent: "center" }}
                                 >
                                     <Card
@@ -315,7 +375,7 @@ function HomeScreen() {
                                         >
                                             <Typography
                                                 variant="h1"
-                                                component="div"
+                                                component="div" // Zmiana na <div>
                                                 sx={{
                                                     fontSize: "50px",
                                                     color: "#556cd6",
@@ -329,20 +389,21 @@ function HomeScreen() {
                                             <Typography
                                                 gutterBottom
                                                 variant="h6"
-                                                component="div"
+                                                component="div" // Zmiana na <div>
                                                 sx={{
                                                     fontWeight: "bold",
                                                     textAlign: "center",
                                                 }}
                                             >
-                                                {breed.name}
+                                                {dog.name}
                                             </Typography>
                                             <Typography
                                                 variant="body2"
                                                 color="text.secondary"
                                                 sx={{ textAlign: "center" }}
+                                                component="div" // Opcjonalnie, aby uniknąć zagnieżdżania <h6> wewnątrz <h2>
                                             >
-                                                Popularna rasa psów.
+                                                Rasa: {dog.breedName}
                                             </Typography>
                                         </CardContent>
                                         <CardActions
@@ -361,7 +422,7 @@ function HomeScreen() {
                                                 }}
                                             >
                                                 <Link
-                                                    to={`/breed/${breed.id}`}
+                                                    to={`/dog/${dog.id}`}
                                                     style={{
                                                         textDecoration: "none",
                                                         color: "white",
