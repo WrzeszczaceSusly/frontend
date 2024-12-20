@@ -58,9 +58,14 @@ function HomeScreen() {
                 });
 
                 if (!response.ok) {
-                    throw new Error("Failed to fetch breeds.");
+                    // Await response.json() to get the error details
+                    const errorDetails = await response.json().catch(() => ({ message: "Failed to parse error response" }));
+                    console.error('Response error:', errorDetails);
+                    throw new Error(`Failed to fetch breeds. Details: ${JSON.stringify(errorDetails)}`);
                 }
+
                 const data: Breed[] = await response.json();
+                console.log('response', data)
                 setAllBreeds(data);
                 const names = data.map((b: Breed) => b.name);
                 const uniqueNames = Array.from(new Set(names));
@@ -93,6 +98,7 @@ function HomeScreen() {
                 }
                 const data: Dog[] = await response.json();
                 setAllDogs(data);
+                console.log('dogs', data)
             } catch (error) {
                 setError("Nie udało się pobrać danych. Spróbuj ponownie później.");
                 console.error(error);
@@ -375,6 +381,7 @@ function HomeScreen() {
                                         >
                                             <Typography
                                                 variant="h1"
+                                                paddingTop="50px"
                                                 component="div" // Zmiana na <div>
                                                 sx={{
                                                     fontSize: "50px",
@@ -382,7 +389,16 @@ function HomeScreen() {
                                                     fontWeight: "bold",
                                                 }}
                                             >
-                                                🐶
+                                                {dog.image ? (
+                                                    <img
+                                                        src={`data:image/jpeg;base64,${dog.image}`}
+                                                        alt={dog.name}
+                                                        style={{ width: "200px", height: "150px", objectFit: "cover" }}
+                                                    />
+                                                ) : (
+                                                    <p>🐶</p>
+                                                )}
+
                                             </Typography>
                                         </Box>
                                         <CardContent>
