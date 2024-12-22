@@ -8,7 +8,8 @@ import '@fontsource/roboto/700.css';
 import { createTheme, ThemeProvider } from "@mui/material";
 import { Route, Routes } from "react-router-dom";
 import HomeScreen from "./core/HomeScreen.tsx";
-import ProtectedRoute from "./security/ProtectedRoute.tsx"; // import nowego komponentu
+import ProtectedRoute from "./security/ProtectedRoute.tsx";
+import DogDetails from "./core/DogDetails.tsx";
 
 
 
@@ -79,7 +80,7 @@ function App() {
         {/* Ochrona trasy poprzez ProtectedRoute */}
         <Route element={<ProtectedRoute />}>
           <Route path="homescreen" element={<HomeScreen />} />
-          {/* Tutaj można dodać kolejne chronione trasy */}
+          <Route path="dog/:id" element={<DogDetails />} />
         </Route>
       </Routes>
     </ThemeProvider>
