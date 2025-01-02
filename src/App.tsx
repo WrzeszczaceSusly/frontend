@@ -1,19 +1,18 @@
-import './App.css';
+import "./App.css";
 import LoginForm from "./auth/LoginForm.tsx";
+import RegisterForm from "./auth/RegisterForm.tsx";
 
-import '@fontsource/roboto/300.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
+import "@fontsource/roboto/300.css";
+import "@fontsource/roboto/400.css";
+import "@fontsource/roboto/500.css";
+import "@fontsource/roboto/700.css";
 import { createTheme, ThemeProvider } from "@mui/material";
 import { Route, Routes } from "react-router-dom";
 import HomeScreen from "./core/HomeScreen.tsx";
 import ProtectedRoute from "./security/ProtectedRoute.tsx";
 import DogDetails from "./core/DogDetails.tsx";
 
-
-
-declare module '@mui/material/styles' {
+declare module "@mui/material/styles" {
   interface BreakpointOverrides {
     xs: false;
     sm: false;
@@ -42,7 +41,6 @@ declare module '@mui/material/styles' {
 }
 
 function App() {
-
   const theme = createTheme({
     breakpoints: {
       values: {
@@ -54,21 +52,21 @@ function App() {
       sm: 4,
       md: 8,
       lg: 16,
-      circle: '50%',
+      circle: "50%",
     },
     palette: {
       primary: {
-        main: '#556cd6',
-        light: '#888fd6',
-        dark: '#334cb2',
+        main: "#556cd6",
+        light: "#888fd6",
+        dark: "#334cb2",
       },
       secondary: {
-        main: '#f50057',
+        main: "#f50057",
       },
       text: {
-        primary: '#2e3131',
-        secondary: '#535353',
-        disabled: '#acacac',
+        primary: "#2e3131",
+        secondary: "#535353",
+        disabled: "#acacac",
       },
     },
   });
@@ -77,7 +75,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <Routes>
         <Route index element={<LoginForm />} />
-        {/* Ochrona trasy poprzez ProtectedRoute */}
+        <Route path="register" element={<RegisterForm />} />
         <Route element={<ProtectedRoute />}>
           <Route path="homescreen" element={<HomeScreen />} />
           <Route path="dog/:id" element={<DogDetails />} />

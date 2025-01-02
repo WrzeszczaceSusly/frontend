@@ -15,12 +15,10 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Divider,
   useTheme,
   Card,
   CardContent,
-  Stack,
-  Chip
+  Stack
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
