@@ -30,6 +30,8 @@ import { Dog } from "../data/Dog";
 import { Link } from "react-router-dom";
 import NavBar from "./NavBar.tsx";
 import HOST from "../config/apiConst.tsx";
+import { LazyLoadImage } from 'react-lazy-load-image-component';
+import 'react-lazy-load-image-component/src/effects/blur.css';
 
 function HomeScreen() {
     const theme = useTheme();
@@ -390,9 +392,10 @@ function HomeScreen() {
                                                 }}
                                             >
                                                 {dog.image ? (
-                                                    <img
+                                                    <LazyLoadImage
                                                         src={`data:image/jpeg;base64,${dog.image}`}
                                                         alt={dog.name}
+                                                        effect="blur"
                                                         style={{ width: "200px", height: "150px", objectFit: "cover" }}
                                                     />
                                                 ) : (
