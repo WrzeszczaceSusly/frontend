@@ -28,8 +28,8 @@ jobs:
 
     - name: Set up Git user
       run: |
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"  # Replace with your email
-        git config --global user.name "github-actions[bot]"  # Replace with your name
+        git config --global user.email "youremail@example.com"  # Replace with your email
+        git config --global user.name "Your Name"  # Replace with your name
 
     - name: Deploy to GitHub Pages
       run: npm run deploy
