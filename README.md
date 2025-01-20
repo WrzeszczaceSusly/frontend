@@ -2,6 +2,7 @@
 - git checkout deploy
 - npm run build
 - npm run deploy
+- web app should be visible at: https://wrzeszczacesusly.github.io/frontend/
 
 # Getting Started with Create React App
 
