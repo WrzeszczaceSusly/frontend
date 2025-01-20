@@ -18,7 +18,8 @@ import {
   useTheme,
   Card,
   CardContent,
-  Stack
+  Stack,
+  TextField
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -35,6 +36,14 @@ import ChildCareIcon from "@mui/icons-material/ChildCare"; // do przyjazności w
 import PetsOutlinedIcon from "@mui/icons-material/PetsOutlined"; // do przyjazności wobec zwierząt
 import LocationSearchingIcon from "@mui/icons-material/LocationSearching"; // do mikrochipa
 
+// reservation
+import { DatePicker } from "@mui/x-date-pickers";
+import dayjs, { Dayjs } from "dayjs"; // For handling dates
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { TimePicker } from "@mui/x-date-pickers";
+import { MenuItem, Alert } from "@mui/material";
+
 const DogDetails: React.FC = () => {
   const theme = useTheme();
   const { id } = useParams();
@@ -42,37 +51,50 @@ const DogDetails: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+  // reservation
+  const [reservationDate, setReservationDate] = useState<Dayjs | null>(null);
+const [reservationError, setReservationError] = useState<string | null>(null);
+const [reservationSuccess, setReservationSuccess] = useState<boolean>(false);
+const [reservationTime, setReservationTime] = useState<string | null>(null);
+const [unavailableMessage, setReservationStatusMessage] = useState<string | null>(null);
 
-    const fetchDog = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`${HOST}/dogs/${id}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // jeśli wymagana autoryzacja
-          },
-          credentials: "include",
-        });
+const timeOptions = [
+  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
+  "17:00", "17:30", "18:00",
+];
 
-        if (!response.ok) {
-          throw new Error("Nie udało się pobrać danych o wybranym psie.");
-        }
+useEffect(() => {
+  const token = localStorage.getItem("token");
 
-        const data: Dog = await response.json();
-        setDog(data);
-      } catch (err) {
-        console.error(err);
-        setError("Wystąpił błąd podczas pobierania danych o psie.");
-      } finally {
-        setLoading(false);
+  const fetchDog = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${HOST}/dogs/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // jeśli wymagana autoryzacja
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Nie udało się pobrać danych o wybranym psie.");
       }
-    };
 
-    fetchDog();
-  }, [id]);
+      const data: Dog = await response.json();
+      setDog(data);
+    } catch (err) {
+      console.error(err);
+      setError("Wystąpił błąd podczas pobierania danych o psie.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchDog();
+}, [id]);
 
   if (loading) {
     return (
@@ -122,6 +144,36 @@ const DogDetails: React.FC = () => {
       </div>
     );
   }
+
+  const handleReservation = async () => {
+    if (!reservationDate || !reservationTime) return;
+  
+    try {
+      setReservationStatusMessage(null);
+      const reservationDateTime = `${reservationDate.format("YYYY-MM-DD")}T${reservationTime}:00`;
+      const response = await fetch(`${HOST}/reservation`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          dogId: id, // Assuming id comes from useParams()
+          date: reservationDateTime,
+        }),
+      });
+
+      const isAvailable = await response.json();
+      if (isAvailable) {
+        setReservationStatusMessage(`Rezerwacja pomyślnie zapisana`);
+      } else {
+        setReservationStatusMessage(`Godzina ${reservationTime} w dniu ${reservationDate} jest już zajęta.`);
+      }
+    } catch (error) {
+      console.error(error);
+      setReservationStatusMessage("Wystąpił błąd podczas rezerwacji. Spróbuj ponownie.");
+    }
+  };
+
 
   return (
     <div style={introBodyStyle}>
@@ -365,6 +417,57 @@ const DogDetails: React.FC = () => {
             </Button>
           </Box>
         </Paper>
+        
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Paper
+              elevation={3}
+              sx={{
+                p: 3,
+                mt: 3,
+                borderRadius: 2,
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                backgroundColor: theme.palette.background.paper,
+              }}
+            >
+              <Typography variant="h6" sx={{ fontWeight: "bold", textAlign: "center" }}>
+                Umów Wizytę
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <DatePicker
+                  label="Wybierz dzień wizyty"
+                  value={reservationDate}
+                  onChange={(newValue) => setReservationDate(newValue)}
+                  renderInput={(params) => <TextField {...params} />}
+                />
+                <TextField
+                  select
+                  label="Wybierz godzinę"
+                  value={reservationTime}
+                  onChange={(e) => setReservationTime(e.target.value)}
+                >
+                  {timeOptions.map((time) => (
+                    <MenuItem key={time} value={time}>
+                      {time}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <Button
+                  variant="contained"
+                  onClick={handleReservation}
+                  disabled={!reservationDate || !reservationTime}
+                >
+                  Zarezerwuj
+                </Button>
+                {unavailableMessage && (
+                  <Alert severity={unavailableMessage.includes("pomyślnie") ? "success" : "warning"} sx={{ mt: 2 }}>
+                  {unavailableMessage}
+                </Alert>
+                )}
+              </Box>
+            </Paper>
+        </LocalizationProvider>
       </Container>
     </div>
   );
