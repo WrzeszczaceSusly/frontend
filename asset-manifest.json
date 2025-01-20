@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/frontend/static/css/main.e6f34fbd.css",
-    "main.js": "/frontend/static/js/main.aa69032a.js",
+    "main.js": "/frontend/static/js/main.793897a0.js",
     "static/js/453.b25e4855.chunk.js": "/frontend/static/js/453.b25e4855.chunk.js",
     "static/media/pieski2.jpg": "/frontend/static/media/pieski2.1a8e5747a16a7811b560.jpg",
     "static/media/pieski3.jpg": "/frontend/static/media/pieski3.1900ff9d1bd07e5d6392.jpg",
@@ -63,11 +63,11 @@
     "static/media/roboto-greek-ext-700-normal.woff": "/frontend/static/media/roboto-greek-ext-700-normal.249853776d22a271b2b5.woff",
     "index.html": "/frontend/index.html",
     "main.e6f34fbd.css.map": "/frontend/static/css/main.e6f34fbd.css.map",
-    "main.aa69032a.js.map": "/frontend/static/js/main.aa69032a.js.map",
+    "main.793897a0.js.map": "/frontend/static/js/main.793897a0.js.map",
     "453.b25e4855.chunk.js.map": "/frontend/static/js/453.b25e4855.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6f34fbd.css",
-    "static/js/main.aa69032a.js"
+    "static/js/main.793897a0.js"
   ]
 }
