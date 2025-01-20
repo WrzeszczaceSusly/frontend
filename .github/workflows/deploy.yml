@@ -32,6 +32,9 @@ jobs:
         git config --global user.name "Your Name"  # Replace with your name
 
     - name: Deploy to GitHub Pages
-      run: npm run deploy
+      run: |
+        # Set up authentication using the GITHUB_TOKEN for pushing to GitHub
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        npm run deploy
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub token for authentication
