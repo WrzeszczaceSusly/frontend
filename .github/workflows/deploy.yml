@@ -26,6 +26,11 @@ jobs:
       run: |
         CI=false npm run build  # Disable treating warnings as errors
 
+    - name: Set up Git user
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"  # Replace with your email
+        git config --global user.name "github-actions[bot]"  # Replace with your name
+
     - name: Deploy to GitHub Pages
       run: npm run deploy
       env:
