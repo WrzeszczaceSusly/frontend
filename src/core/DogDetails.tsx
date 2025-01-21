@@ -149,12 +149,15 @@ useEffect(() => {
     if (!reservationDate || !reservationTime) return;
   
     try {
+      const token = localStorage.getItem("token");
+      
       setReservationStatusMessage(null);
       const reservationDateTime = `${reservationDate.format("YYYY-MM-DD")}T${reservationTime}:00`;
       const response = await fetch(`${HOST}/reservation`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // jeśli wymagana autoryzacja
         },
         body: JSON.stringify({
           dogId: id, // Assuming id comes from useParams()
